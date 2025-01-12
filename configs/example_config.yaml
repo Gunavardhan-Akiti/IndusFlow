@@ -1,0 +1,36 @@
+kafka_topics:
+  databasev2:
+    name: databasev2
+    partitions: 96
+  downloadedImagesv2:
+    name: downloadedImagesv2
+    partitions: 8
+  aestheticScoredImagesv2:
+    name: aestheticScoredImagesv2
+    partitions: 16
+
+stages:
+  read_database:
+    batch_size: 256
+    num_shards: 1
+    shard_idx: 0
+    dataset: diffusion
+    producer_list:
+      - databasev2
+
+  download_images:
+    batch_size: 64    # per database partition
+    consumer: databasev2
+    producer_list:
+      - downloadedImagesv2
+
+  aesthetic_scoring:
+    batch_size: 128
+    consumer: downloadedImagesv2
+    producer_list:
+      - aestheticScoredImagesv2
+
+  update_database:
+    dataset: diffusion
+    consumer: aestheticScoredImagesv2
+
